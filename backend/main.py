@@ -3,6 +3,7 @@ import json
 import time
 import os
 import re
+import logging
 from typing import List, Dict, Any, Optional
 from functools import lru_cache
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
@@ -20,6 +21,17 @@ from slowapi.errors import RateLimitExceeded
 from stadium_data import STADIUM_INFO, ZONES, FOOD_MENU, MATCH_TIMELINE
 from crowd_simulator import CrowdSimulator
 from gemini_service import GeminiService
+
+from google.cloud import logging as cloud_logging
+
+# Setup Google Cloud Logging
+try:
+    client = cloud_logging.Client()
+    client.setup_logging()
+    logging.info("Google Cloud Logging initialized")
+except Exception:
+    logging.basicConfig(level=logging.INFO)
+    logging.info("Local logging active")
 
 app = FastAPI(title="VenueFlow API", version="1.0.0")
 
