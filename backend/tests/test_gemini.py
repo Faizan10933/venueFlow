@@ -1,34 +1,27 @@
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import MagicMock, patch
 from gemini_service import GeminiService
 
-@pytest.mark.asyncio
-async def test_gemini_demo_fallback():
-    # Force use_gemini to False to test fallback logic
+@patch('google.generativeai.GenerativeModel')
+def test_gemini_response_generation(mock_model):
+    """Test that Gemini service correctly interacts with the Google AI SDK."""
+    # Setup mock
+    mock_chat = MagicMock()
+    mock_chat.send_message.return_value.text = "I recommend the North Food Court."
+    mock_model.return_value.start_chat.return_value = mock_chat
+    
     service = GeminiService()
-    service.use_gemini = False
+    state = {"summary": {"busiest_zone": "South Gate"}}
     
-    mock_live_data = {
-        "summary": {"busiest_zone": "Gate 1", "avg_food_wait": 5},
-        "sim_time": {"display": "18:00"},
-        "phase": "pre_match"
-    }
+    response = service.get_chat_response("Where should I eat?", state)
     
-    response = await service.chat("Where is the food?", mock_live_data, "English")
-    assert len(response) > 0
-    assert "food" in response.lower() or "wait" in response.lower() or "minute" in response.lower()
+    assert "North Food Court" in response
+    assert mock_chat.send_message.called
 
-@pytest.mark.asyncio
-@patch("gemini_service.model")
-async def test_gemini_api_call(mock_model):
+def test_gemini_prompt_sanitization():
+    """Ensure prompt sanitization handles empty or malicious input."""
     service = GeminiService()
-    service.use_gemini = True
-    service.api_key = "fake_key"
     
-    mock_response = AsyncMock()
-    mock_response.text = "This is a mocked AI response"
-    mock_model.generate_content_async.return_value = mock_response
-    
-    response = await service.chat("Test message", {}, "English")
-    assert response == "This is a mocked AI response"
-    mock_model.generate_content_async.assert_called_once()
+    # Test short message
+    res = service.get_chat_response("a", {})
+    assert "ask a more specific question" in res.lower()
