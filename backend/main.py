@@ -31,35 +31,9 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Middleware: GZip Compression for Efficiency
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-# Security Middleware: Basic Security Headers
-class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        # Skip middleware for WebSocket connections to avoid handshake issues
-        if request.scope.get("type") == "websocket":
-            return await call_next(request)
-            
-        response = await call_next(request)
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
-        response.headers["X-XSS-Protection"] = "1; mode=block"
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-        
-        # Strict CSP to prevent unauthorized scripts, styles, or data exfiltration
-        csp = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' https://apis.google.com https://www.gstatic.com; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-            "font-src 'self' https://fonts.gstatic.com; "
-            "img-src 'self' data: https://www.google.com https://lh3.googleusercontent.com; "
-            "connect-src 'self' ws: wss: https://*.googleapis.com https://*.firebaseio.com; "
-            "frame-src 'self' https://www.google.com https://*.firebaseapp.com; "
-            "object-src 'none'; "
-            "base-uri 'self';"
-        )
-        response.headers["Content-Security-Policy"] = csp
-        return response
+# Note: SecurityHeadersMiddleware removed temporarily to ensure WebSocket compatibility on Cloud Run.
+# We will use a safer method for headers once the connection is stable.
 
-app.add_middleware(SecurityHeadersMiddleware)
 
 # Security: Tighten CORS to known origins
 app.add_middleware(
@@ -134,11 +108,13 @@ async def chat_endpoint(request: Request, body: ChatRequest) -> Dict[str, str]:
 async def websocket_endpoint(websocket: WebSocket):
     """Real-time crowd data via WebSocket."""
     await websocket.accept()
+    print(f"DEBUG: WebSocket accepted from {websocket.client}")
     connected_clients.append(websocket)
     try:
         # Send initial state
         state = simulator.tick()
         await websocket.send_json(state)
+        print("DEBUG: Initial state sent successfully")
 
         # Keep connection alive, listen for pings
         while True:
