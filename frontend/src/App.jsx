@@ -8,7 +8,6 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ChatPage = lazy(() => import('./pages/ChatPage'));
 const TimelinePage = lazy(() => import('./pages/TimelinePage'));
 const FoodPage = lazy(() => import('./pages/FoodPage'));
-import { analytics } from './firebase-config';
 
 const WS_URL = window.location.protocol === 'https:' ? `wss://${window.location.host}/ws` : `ws://${window.location.host}/ws`;
 
