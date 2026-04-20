@@ -1,10 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import AppShell from './components/AppShell';
-import DashboardPage from './pages/DashboardPage';
-import ChatPage from './pages/ChatPage';
-import TimelinePage from './pages/TimelinePage';
-import FoodPage from './pages/FoodPage';
+import { analytics } from './firebase-config';
+
+// Lazy loaded routes for extreme efficiency / code-splitting
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const ChatPage = lazy(() => import('./pages/ChatPage'));
+const TimelinePage = lazy(() => import('./pages/TimelinePage'));
+const FoodPage = lazy(() => import('./pages/FoodPage'));
+import { analytics } from './firebase-config';
 
 const WS_URL = window.location.protocol === 'https:' ? `wss://${window.location.host}/ws` : `ws://${window.location.host}/ws`;
 
@@ -79,12 +83,20 @@ function App() {
             ⚠️ Not connected to backend. Start the server with: <code style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 8px', borderRadius: '4px' }}>cd backend && source venv/bin/activate && python main.py</code>
           </div>
         )}
-        <Routes>
-          <Route path="/" element={<DashboardPage state={state} />} />
-          <Route path="/chat" element={<ChatPage />} />
-          <Route path="/timeline" element={<TimelinePage simTime={simTime} />} />
-          <Route path="/food" element={<FoodPage />} />
-        </Routes>
+        <Suspense fallback={
+          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+            <div style={{ display: 'inline-block', width: '24px', height: '24px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--accent-blue)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+            <div style={{ marginTop: '12px' }}>Loading page...</div>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </div>
+        }>
+          <Routes>
+            <Route path="/" element={<DashboardPage state={state} />} />
+            <Route path="/chat" element={<ChatPage />} />
+            <Route path="/timeline" element={<TimelinePage simTime={simTime} timeline={state?.match_timeline || []} activeIdx={state?.phase ? ['pre_match', 'innings_1', 'innings_break', 'innings_2', 'post_match'].indexOf(state.phase) : 0} />} />
+            <Route path="/food" element={<FoodPage />} />
+          </Routes>
+        </Suspense>
       </AppShell>
     </BrowserRouter>
   );

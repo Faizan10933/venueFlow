@@ -3,3 +3,7 @@ uvicorn[standard]
 websockets
 google-generativeai
 pydantic
+pytest
+httpx
+slowapi
+pydantic-settings

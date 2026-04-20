@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
 const NAV_ITEMS = [
   { path: '/', label: 'Dashboard', icon: '📊' },
@@ -21,11 +22,14 @@ export default function AppShell({ children, simTime, phase }) {
 
   return (
     <div className="app-shell">
+      <a href="#main-content" className="skip-to-content">
+        Skip to main content
+      </a>
       {sidebarOpen && <div className="mobile-overlay" onClick={() => setSidebarOpen(false)} />}
-      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`} aria-label="Sidebar Navigation">
         <div className="sidebar-logo">VenueFlow</div>
         <div className="sidebar-subtitle">Smart Stadium Companion</div>
-        <nav className="sidebar-nav">
+        <nav className="sidebar-nav" aria-label="Main Menu">
           {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.path}
@@ -33,8 +37,9 @@ export default function AppShell({ children, simTime, phase }) {
               end={item.path === '/'}
               className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
               onClick={() => setSidebarOpen(false)}
+              aria-current={({ isActive }) => isActive ? 'page' : undefined}
             >
-              <span>{item.icon}</span>
+              <span aria-hidden="true">{item.icon}</span>
               <span>{item.label}</span>
             </NavLink>
           ))}
@@ -58,8 +63,13 @@ export default function AppShell({ children, simTime, phase }) {
           )}
         </div>
       </aside>
-      <main className="main-content">
-        <button className="mobile-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
+      <main id="main-content" className="main-content" role="main">
+        <button 
+          className="mobile-menu-btn" 
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+          aria-expanded={sidebarOpen}
+        >
           ☰
         </button>
         {children}
@@ -67,3 +77,9 @@ export default function AppShell({ children, simTime, phase }) {
     </div>
   );
 }
+
+AppShell.propTypes = {
+  children: PropTypes.node.isRequired,
+  simTime: PropTypes.string,
+  phase: PropTypes.string,
+};

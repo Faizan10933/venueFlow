@@ -13,7 +13,7 @@ export default function AlertsFeed({ alerts }) {
   return (
     <div className="alerts-container glass-card">
       <h3>🔔 Live Alerts <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 400 }}>({alerts.length})</span></h3>
-      <div className="alerts-list">
+      <div className="alerts-list" role="status" aria-live="polite">
         {alerts.map((alert) => (
           <div key={alert.id} className={`alert-item ${alert.type}`}>
             <div>{alert.message}</div>

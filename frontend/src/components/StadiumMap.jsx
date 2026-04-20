@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, memo, useCallback, useRef } from 'react';
+import PropTypes from 'prop-types';
 
 function getZoneColor(pct) {
   if (pct >= 0.85) return '#ef4444';
@@ -12,23 +13,39 @@ function getZoneOpacity(pct) {
   return 0.35 + pct * 0.55;
 }
 
-export default function StadiumMap({ zones }) {
+const StadiumMap = memo(function StadiumMap({ zones }) {
   const [hoveredZone, setHoveredZone] = useState(null);
   const [selectedZone, setSelectedZone] = useState(null);
+  
+  // Throttle hover events to ~30fps for extreme efficiency
+  const throttleTimer = useRef(null);
+  const handleMouseEnter = useCallback((zone) => {
+    if (throttleTimer.current) return;
+    throttleTimer.current = setTimeout(() => {
+      setHoveredZone(zone);
+      throttleTimer.current = null;
+    }, 32);
+  }, []);
 
   if (!zones || zones.length === 0) return null;
 
   const displayZone = selectedZone || hoveredZone;
 
   return (
-    <div className="stadium-map-container glass-card">
+    <div className="stadium-map-container glass-card" aria-label="Stadium Map View">
       <h3>🏟️ Live Crowd Heatmap</h3>
-      <svg viewBox="0 0 500 500" className="stadium-svg">
+      <svg 
+        viewBox="0 0 500 500" 
+        className="stadium-svg"
+        role="application"
+        aria-label="Interactive map of Wankhede Stadium showing real-time crowd density"
+      >
+        <title>Stadium Crowd Density Heatmap</title>
         {/* Stadium outline */}
         <ellipse cx="250" cy="250" rx="220" ry="220" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="2" />
         {/* Pitch */}
         <ellipse cx="250" cy="250" rx="70" ry="45" fill="rgba(16,185,129,0.12)" stroke="rgba(16,185,129,0.25)" strokeWidth="1" />
-        <text x="250" y="253" textAnchor="middle" fill="rgba(16,185,129,0.4)" fontSize="8" fontWeight="600">PITCH</text>
+        <text x="250" y="253" textAnchor="middle" fill="rgba(16,185,129,0.4)" fontSize="8" fontWeight="600" aria-hidden="true">PITCH</text>
 
         {/* Zones */}
         {zones.map((zone) => {
@@ -40,9 +57,19 @@ export default function StadiumMap({ zones }) {
 
           return (
             <g key={zone.id}
-              onMouseEnter={() => setHoveredZone(zone)}
+              onMouseEnter={() => handleMouseEnter(zone)}
               onMouseLeave={() => setHoveredZone(null)}
               onClick={() => setSelectedZone(selectedZone?.id === zone.id ? null : zone)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSelectedZone(selectedZone?.id === zone.id ? null : zone);
+                }
+              }}
+              tabIndex={0}
+              role="button"
+              aria-label={`${zone.name}, ${Math.round(zone.occupancy_pct * 100)}% full`}
+              aria-pressed={isSelected}
             >
               <ellipse
                 cx={zone.cx} cy={zone.cy}
@@ -84,7 +111,10 @@ export default function StadiumMap({ zones }) {
 
       {/* Zone Detail Popup */}
       {displayZone && (
-        <div style={{
+        <div 
+          role="region"
+          aria-live="polite"
+          style={{
           marginTop: '16px',
           padding: '14px',
           background: 'rgba(255,255,255,0.05)',
@@ -107,4 +137,24 @@ export default function StadiumMap({ zones }) {
       )}
     </div>
   );
-}
+});
+
+StadiumMap.propTypes = {
+  zones: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      occupancy_pct: PropTypes.number.isRequired,
+      current_occupancy: PropTypes.number.isRequired,
+      capacity: PropTypes.number.isRequired,
+      wait_time_min: PropTypes.number.isRequired,
+      trend: PropTypes.string.isRequired,
+      cx: PropTypes.number.isRequired,
+      cy: PropTypes.number.isRequired,
+      rx: PropTypes.number.isRequired,
+      ry: PropTypes.number.isRequired,
+    })
+  ).isRequired,
+};
+
+export default StadiumMap;

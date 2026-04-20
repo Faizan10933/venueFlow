@@ -6,7 +6,7 @@ Generates realistic crowd density patterns for a live IPL match.
 import math
 import random
 import time
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from stadium_data import ZONES, MATCH_TIMELINE
 
 # Match phases and their crowd behavior profiles
@@ -83,8 +83,13 @@ class CrowdSimulator:
                 "ry": zone.get("ry", 15),
             }
 
-    def get_simulated_time(self) -> dict:
-        """Get current simulated match time."""
+    def get_simulated_time(self) -> Dict[str, Any]:
+        """
+        Get current simulated match time based on time compression.
+        
+        Returns:
+            Dict[str, Any]: Dictionary containing hours, minutes, display string, etc.
+        """
         elapsed_real = time.time() - self.start_time
         elapsed_sim_minutes = (elapsed_real * self.time_compression) / 60
         total_minutes = self.match_start_hour * 60 + self.match_start_min + elapsed_sim_minutes
@@ -126,8 +131,16 @@ class CrowdSimulator:
         )
         return noise * amplitude
 
-    def tick(self) -> dict:
-        """Advance simulation by one tick and return current state."""
+    def tick(self) -> Dict[str, Any]:
+        """
+        Advance simulation by one tick and return current state.
+        
+        This generates perlin-noise-based crowd fluctuations and triggers
+        alerts based on occupancy thresholds.
+        
+        Returns:
+            Dict[str, Any]: The complete simulation state including zones, summary, and alerts.
+        """
         self.tick_count += 1
         phase = self.get_current_phase()
         sim_time = self.get_simulated_time()
@@ -258,8 +271,16 @@ class CrowdSimulator:
             "tick": self.tick_count,
         }
 
-    def get_zone_recommendation(self, zone_type: str) -> dict:
-        """Get the best zone of a given type (lowest occupancy)."""
+    def get_zone_recommendation(self, zone_type: str) -> Dict[str, Any]:
+        """
+        Get the best zone of a given type (lowest occupancy).
+        
+        Args:
+            zone_type (str): The type of zone to filter by (e.g., 'food_court').
+            
+        Returns:
+            Dict[str, Any]: The recommended zone data or error if none found.
+        """
         zones_of_type = [
             s for s in self.zone_states.values() if s["type"] == zone_type
         ]

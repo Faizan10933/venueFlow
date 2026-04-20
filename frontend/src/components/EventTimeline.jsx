@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types';
+
 const TIMELINE = [
   { time: '17:30', event: 'Gates Open', phase: 'pre_match' },
   { time: '18:00', event: 'Early Bird Entry Window', phase: 'pre_match' },
@@ -58,5 +60,10 @@ export default function EventTimeline({ simTime }) {
         })}
       </div>
     </div>
+    </div>
   );
 }
+
+EventTimeline.propTypes = {
+  simTime: PropTypes.string,
+};

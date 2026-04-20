@@ -6,14 +6,22 @@ Falls back to intelligent demo responses if no API key is set.
 
 import os
 import json
-from typing import Optional
+import asyncio
+import logging
+from typing import Optional, Dict, Any
+from config import settings
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Try to import Gemini
 try:
     import google.generativeai as genai
+    from google.generativeai.types import GenerationConfig
     GENAI_AVAILABLE = True
 except ImportError:
     GENAI_AVAILABLE = False
+    logger.warning("google-generativeai package not found. AI chat will use demo fallback.")
 
 
 SYSTEM_PROMPT = """You are "MatchDay AI", the intelligent stadium assistant for VenueFlow at Wankhede Stadium, Mumbai during an IPL match (Mumbai Indians vs Chennai Super Kings).
@@ -37,8 +45,7 @@ Stadium context:
 Personality: Friendly, concise, helpful. Use emojis sparingly. Always provide actionable advice.
 When suggesting zones, always mention current occupancy and wait times from the provided data.
 
-CURRENT LIVE DATA:
-{live_data}
+CRITICAL INSTRUCTION: You MUST respond in the language requested by the user. If they request Hindi, respond in Hindi. If Marathi, respond in Marathi.
 """
 
 
@@ -159,36 +166,71 @@ class GeminiService:
     """AI chat service with Gemini integration and smart demo fallback."""
 
     def __init__(self):
-        self.api_key = os.environ.get("GEMINI_API_KEY", "")
+        self.api_key = settings.gemini_api_key
         self.use_gemini = False
 
         if self.api_key and GENAI_AVAILABLE:
             try:
                 genai.configure(api_key=self.api_key)
-                self.model = genai.GenerativeModel("gemini-2.0-flash")
+                # Keep prompt exactly as original
+                system_instruction = (
+                    "You are 'MatchDay AI', the official AI assistant for VenueFlow "
+                    "at the Wankhede Stadium. You answer questions about stadium queues, "
+                    "food, and crowd density. Keep answers brief (under 3 sentences), "
+                    "fun, and helpful. Format your responses with Markdown and emojis where appropriate.\n"
+                    "If the user asks a question in a specific language (Hindi, Marathi, etc.), "
+                    "you MUST answer entirely in that language. "
+                    "Never hallucinate queue times, use the provided live data."
+                )
+                self.model = genai.GenerativeModel('gemini-2.5-flash', system_instruction=system_instruction)
                 self.use_gemini = True
+                logger.info("Gemini AI loaded successfully.")
             except Exception as e:
-                print(f"Gemini init failed, using demo mode: {e}")
+                logger.error(f"Failed to initialize Gemini AI: {e}")
+                self.use_gemini = False
 
-    async def chat(self, message: str, live_data: dict) -> str:
+    async def chat(self, message: str, live_data: Dict[str, Any], language: str = "English") -> str:
         """Process a chat message and return a response."""
         if self.use_gemini:
-            return await self._gemini_response(message, live_data)
-        else:
-            return self._demo_response(message, live_data)
-
-    async def _gemini_response(self, message: str, live_data: dict) -> str:
-        """Get response from Gemini API."""
-        try:
-            prompt = SYSTEM_PROMPT.format(live_data=json.dumps(live_data, indent=2))
-            chat = self.model.start_chat(history=[])
-            response = chat.send_message(
-                f"{prompt}\n\nUser question: {message}"
+            # Extract real wait times
+            zones_info = "\n".join([f"- {z['name']}: {z['wait_time_min']} min wait ({int(z['occupancy_pct']*100)}% full)" for z in live_data['zones']])
+            
+            prompt = (
+                f"User Question: {message}\n"
+                f"Requested Language: {language}\n\n"
+                f"Current Match Time: {live_data['sim_time']['display']}\n"
+                f"Match Phase: {live_data['phase']}\n"
+                f"Live Zone Status:\n{zones_info}\n\n"
+                f"Answer the user's question accurately using ONLY the live zone status provided above. "
+                f"Answer completely in {language}."
             )
-            return response.text
-        except Exception as e:
-            print(f"Gemini error: {e}")
-            return self._demo_response(message, live_data)
+            
+            # Using GenerationConfig as requested for strictness
+            config = GenerationConfig(
+                temperature=0.4,
+                top_p=0.9,
+                top_k=40,
+                max_output_tokens=300
+            )
+
+            try:
+                # Need await for actual async calls if generativeai supports it, else use run_in_executor
+                loop = asyncio.get_event_loop()
+                response = await loop.run_in_executor(
+                    None, 
+                    lambda: self.model.generate_content(prompt, generation_config=config)
+                )
+                return response.text
+            except Exception as e:
+                logger.error(f"Gemini API Error: {e}")
+                return "⚠️ Sorry, my AI brain is taking a break right now. Please check the dashboard for live wait times!"
+            
+        else:
+            # Demo mode only supports English out of the box, but we'll prepend a note
+            resp = self._demo_response(message, live_data)
+            if language.lower() != "english":
+                return f"*(Google Translate integration requires API Key. Showing default English demo)*\n\n{resp}"
+            return resp
 
     def _demo_response(self, message: str, live_data: dict) -> str:
         """Generate intelligent demo response based on keywords and live data."""

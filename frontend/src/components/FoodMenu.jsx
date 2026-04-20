@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db, provider } from '../firebase-config';
 
 const MENU = [
   { id: 'f1', name: 'Vada Pav', price: 60, category: 'Snacks', prep: 2, veg: true },
@@ -23,15 +26,80 @@ const CATEGORIES = ['All', 'Snacks', 'Main', 'Beverages', 'Desserts'];
 export default function FoodMenu() {
   const [filter, setFilter] = useState('All');
   const [orders, setOrders] = useState([]);
+  const [user, setUser] = useState(null);
+  const [isOrdering, setIsOrdering] = useState(false);
+
+  useEffect(() => {
+    if (!auth) return;
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogin = useCallback(async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Login failed:", error);
+      alert("Login failed. Ensure Firebase config is set.");
+    }
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    if (auth) signOut(auth);
+  }, []);
 
   const filtered = filter === 'All' ? MENU : MENU.filter((f) => f.category === filter);
 
-  const addOrder = (item) => {
-    setOrders((prev) => [...prev, { ...item, orderedAt: new Date().toLocaleTimeString() }]);
-  };
+  const addOrder = useCallback(async (item) => {
+    if (!user) {
+      alert("Please sign in with Google to pre-order food!");
+      return;
+    }
+
+    setIsOrdering(true);
+    try {
+      // Attempt to save to Firestore
+      if (db) {
+        await addDoc(collection(db, "orders"), {
+          userId: user.uid,
+          userName: user.displayName,
+          itemName: item.name,
+          price: item.price,
+          status: "pending",
+          timestamp: serverTimestamp()
+        });
+      }
+      
+      setOrders((prev) => [...prev, { ...item, orderedAt: new Date().toLocaleTimeString() }]);
+    } catch (e) {
+      console.error("Error adding document: ", e);
+      alert("Could not save order. Please check Firebase config.");
+    }
+    setIsOrdering(false);
+  }, [user]);
 
   return (
     <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '8px' }}>
+        <div>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Google Services Auth</span>
+          {user ? (
+            <div style={{ fontWeight: 600, color: 'var(--accent-green)' }}>Logged in as {user.displayName}</div>
+          ) : (
+            <div style={{ fontWeight: 600, color: 'var(--accent-amber)' }}>Not logged in</div>
+          )}
+        </div>
+        {user ? (
+          <button onClick={handleLogout} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>Sign Out</button>
+        ) : (
+          <button onClick={handleLogin} style={{ background: '#4285F4', border: 'none', color: 'white', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ background: 'white', borderRadius: '50%', width: '16px', height: '16px', display: 'inline-block' }}></span> Sign in with Google
+          </button>
+        )}
+      </div>
+
       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
         {CATEGORIES.map((cat) => (
           <button
@@ -75,8 +143,13 @@ export default function FoodMenu() {
               <span>⏱ {item.prep} min prep</span>
             </div>
             <div className="food-price">₹{item.price}</div>
-            <button className="food-order-btn" onClick={() => addOrder(item)}>
-              Pre-Order — Skip the Line
+            <button 
+              className="food-order-btn" 
+              onClick={() => addOrder(item)}
+              aria-label={`Pre-order ${item.name} for ₹${item.price}`}
+              disabled={isOrdering}
+            >
+              {isOrdering ? 'Processing...' : 'Pre-Order — Skip the Line'}
             </button>
           </div>
         ))}

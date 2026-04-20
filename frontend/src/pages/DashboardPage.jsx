@@ -1,4 +1,6 @@
+import React, { useMemo } from 'react';
 import LiveStats from '../components/LiveStats';
+import PropTypes from 'prop-types';
 import StadiumMap from '../components/StadiumMap';
 import AlertsFeed from '../components/AlertsFeed';
 import QueueStatus from '../components/QueueStatus';
@@ -14,6 +16,10 @@ export default function DashboardPage({ state }) {
       </div>
     );
   }
+
+  const foodZones = useMemo(() => state.zones?.filter((z) => z.type === 'food_court') || [], [state.zones]);
+  const restroomZones = useMemo(() => state.zones?.filter((z) => z.type === 'restroom') || [], [state.zones]);
+  const gateZones = useMemo(() => state.zones?.filter((z) => z.type === 'gate') || [], [state.zones]);
 
   return (
     <div>
@@ -33,14 +39,14 @@ export default function DashboardPage({ state }) {
       </div>
 
       <QueueStatus
-        zones={state.zones?.filter((z) => z.type === 'food_court')}
+        zones={foodZones}
         title="Food Court Status"
         icon="🍔"
       />
 
       <div style={{ marginTop: '24px' }}>
         <QueueStatus
-          zones={state.zones?.filter((z) => z.type === 'restroom')}
+          zones={restroomZones}
           title="Restroom Status"
           icon="🚻"
         />
@@ -48,11 +54,34 @@ export default function DashboardPage({ state }) {
 
       <div style={{ marginTop: '24px' }}>
         <QueueStatus
-          zones={state.zones?.filter((z) => z.type === 'gate')}
+          zones={gateZones}
           title="Gate Status"
           icon="🚪"
         />
       </div>
+
+      <div style={{ marginTop: '24px' }} className="glass-card">
+        <h3>📍 Google Maps: Wankhede Stadium Live Traffic</h3>
+        <iframe
+          title="Google Maps Wankhede Stadium"
+          width="100%"
+          height="300"
+          style={{ border: 0, borderRadius: 'var(--radius-md)', marginTop: '12px' }}
+          loading="lazy"
+          allowFullScreen
+          src="https://www.google.com/maps/embed/v1/place?key=YOUR_GOOGLE_MAPS_API_KEY&q=Wankhede+Stadium,Mumbai"
+        ></iframe>
+        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+          *Note: Requires a valid Google Maps API Key to render. Replace YOUR_GOOGLE_MAPS_API_KEY in DashboardPage.jsx.
+        </p>
+      </div>
     </div>
   );
 }
+
+DashboardPage.propTypes = {
+  state: PropTypes.shape({
+    summary: PropTypes.object,
+    zones: PropTypes.array,
+  })
+};
