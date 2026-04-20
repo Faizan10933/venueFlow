@@ -21,14 +21,14 @@ ZONES = [
     {"id": "gate_west", "name": "West Gate", "type": "gate", "capacity": 600, "cx": 60, "cy": 250, "rx": 20, "ry": 50},
 
     # Seating Sections (arranged around the oval)
-    {"id": "stand_north", "name": "North Stand", "type": "seating", "capacity": 5000, "cx": 250, "cy": 110, "rx": 90, "ry": 25},
-    {"id": "stand_south", "name": "South Stand", "type": "seating", "capacity": 5000, "cx": 250, "cy": 390, "rx": 90, "ry": 25},
-    {"id": "stand_east", "name": "East Stand", "type": "seating", "capacity": 4500, "cx": 390, "cy": 250, "rx": 25, "ry": 90},
-    {"id": "stand_west", "name": "West Stand", "type": "seating", "capacity": 4500, "cx": 110, "cy": 250, "rx": 25, "ry": 90},
-    {"id": "stand_ne", "name": "North-East Pavilion", "type": "seating", "capacity": 3500, "cx": 370, "cy": 130, "rx": 40, "ry": 30},
-    {"id": "stand_nw", "name": "North-West Pavilion", "type": "seating", "capacity": 3500, "cx": 130, "cy": 130, "rx": 40, "ry": 30},
-    {"id": "stand_se", "name": "South-East Pavilion", "type": "seating", "capacity": 3500, "cx": 370, "cy": 370, "rx": 40, "ry": 30},
-    {"id": "stand_sw", "name": "South-West Pavilion", "type": "seating", "capacity": 3500, "cx": 130, "cy": 370, "rx": 40, "ry": 30},
+    {"id": "stand_north", "name": "North Stand (MI Fan Zone)", "type": "seating", "capacity": 5000, "cx": 250, "cy": 110, "rx": 90, "ry": 25},
+    {"id": "stand_south", "name": "South Stand (CSK Fan Zone)", "type": "seating", "capacity": 5000, "cx": 250, "cy": 390, "rx": 90, "ry": 25},
+    {"id": "stand_east", "name": "East Stand (General)", "type": "seating", "capacity": 4500, "cx": 390, "cy": 250, "rx": 25, "ry": 90},
+    {"id": "stand_west", "name": "West Stand (General)", "type": "seating", "capacity": 4500, "cx": 110, "cy": 250, "rx": 25, "ry": 90},
+    {"id": "stand_ne", "name": "North-East Pavilion (Corporate)", "type": "seating", "capacity": 3500, "cx": 370, "cy": 130, "rx": 40, "ry": 30},
+    {"id": "stand_nw", "name": "North-West Pavilion (Corporate)", "type": "seating", "capacity": 3500, "cx": 130, "cy": 130, "rx": 40, "ry": 30},
+    {"id": "stand_se", "name": "South-East Pavilion (Family)", "type": "seating", "capacity": 3500, "cx": 370, "cy": 370, "rx": 40, "ry": 30},
+    {"id": "stand_sw", "name": "South-West Pavilion (Family)", "type": "seating", "capacity": 3500, "cx": 130, "cy": 370, "rx": 40, "ry": 30},
 
     # Food Courts
     {"id": "food_north", "name": "North Food Court", "type": "food_court", "capacity": 200, "cx": 250, "cy": 155, "rx": 20, "ry": 10},
@@ -49,8 +49,8 @@ ZONES = [
     {"id": "rest_nw", "name": "NW Restrooms", "type": "restroom", "capacity": 50, "cx": 120, "cy": 160, "rx": 8, "ry": 8},
 
     # Merchandise Stores
-    {"id": "merch_north", "name": "MI Fan Store (North)", "type": "merch_store", "capacity": 100, "cx": 300, "cy": 95, "rx": 12, "ry": 8},
-    {"id": "merch_south", "name": "Official Merch Store", "type": "merch_store", "capacity": 100, "cx": 200, "cy": 405, "rx": 12, "ry": 8},
+    {"id": "merch_north", "name": "MI Official Store (North)", "type": "merch_store", "capacity": 100, "cx": 300, "cy": 95, "rx": 12, "ry": 8},
+    {"id": "merch_south", "name": "CSK Official Store (South)", "type": "merch_store", "capacity": 100, "cx": 200, "cy": 405, "rx": 12, "ry": 8},
 ]
 
 FOOD_MENU = [

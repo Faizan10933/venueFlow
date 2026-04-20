@@ -43,18 +43,25 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Middleware: GZip Compression for Efficiency
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-# Note: SecurityHeadersMiddleware removed temporarily to ensure WebSocket compatibility on Cloud Run.
-# We will use a safer method for headers once the connection is stable.
-
-
-# Security: Tighten CORS to known origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allow all for hackathon deployment to Cloud Run
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """Safely add security headers without breaking WebSockets."""
+    response = await call_next(request)
+    # Don't add CSP to WebSocket upgrades
+    if request.url.path != "/ws":
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
 
 # Global instances
 simulator = CrowdSimulator()
