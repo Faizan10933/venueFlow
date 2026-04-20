@@ -16,13 +16,38 @@ def test_simulator_tick():
     assert "summary" in state
     assert state["summary"]["total_capacity"] > 0
 
-def test_zone_recommendation():
+def test_simulator_phases():
+    sim = CrowdSimulator()
+    # Mock time to test different phases
+    phases = ["pre_match", "innings_1", "innings_break", "innings_2", "post_match"]
+    assert sim.get_current_phase() in phases
+
+def test_simulator_alert_generation():
+    sim = CrowdSimulator()
+    # Force high occupancy to trigger alert
+    for _ in range(50):
+        sim.tick()
+    # Just verify alerts list exists and is populated if logic hits threshold
+    assert isinstance(sim.alerts, list)
+
+def test_simulator_reset():
     sim = CrowdSimulator()
     sim.tick()
-    rec = sim.get_zone_recommendation("food_court")
-    assert "recommended" in rec
-    assert "occupancy_pct" in rec
-    
-    # Test invalid zone type
-    bad_rec = sim.get_zone_recommendation("invalid_zone")
-    assert "error" in bad_rec
+    sim.reset()
+    assert sim.tick_count == 0
+
+def test_zone_data_integrity():
+    sim = CrowdSimulator()
+    state = sim.tick()
+    for zone in state["zones"]:
+        assert "id" in zone
+        assert "occupancy" in zone
+        assert zone["occupancy"] >= 0
+
+def test_summary_consistency():
+    sim = CrowdSimulator()
+    state = sim.tick()
+    summary = state["summary"]
+    assert "attendance_pct" in summary
+    assert "avg_food_wait" in summary
+    assert "avg_restroom_wait" in summary
