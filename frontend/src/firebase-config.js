@@ -5,13 +5,13 @@ import { getAnalytics, isSupported } from "firebase/analytics";
 
 // TODO: Replace this with your actual Firebase config from console.firebase.google.com
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID",
-  measurementId: "G-YOUR_MEASUREMENT_ID"
+  apiKey: "AIzaSyDiAYeXPGuZkpbyYbd24pa9_zto7z3P8IU",
+  authDomain: "mindmate-b7d7a.firebaseapp.com",
+  projectId: "mindmate-b7d7a",
+  storageBucket: "mindmate-b7d7a.firebasestorage.app",
+  messagingSenderId: "631009377883",
+  appId: "1:631009377883:web:a256bc360cdd3aedb1897e",
+  measurementId: "G-NWE1V0XSJ7"
 };
 
 let app, auth, db, analytics, provider;
