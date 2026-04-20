@@ -15,8 +15,7 @@ WORKDIR /app
 
 # Install backend dependencies
 COPY backend/requirements.txt ./
-# (If we didn't have requirements.txt, we can just install directly, but let's create a requirements.txt)
-RUN pip install --no-cache-dir fastapi "uvicorn[standard]" websockets google-generativeai pydantic
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy backend source
 COPY backend/ ./
