@@ -33,7 +33,11 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Security Middleware: Basic Security Headers
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
+    async def dispatch(self, request: Request, call_next):
+        # Skip middleware for WebSocket connections to avoid handshake issues
+        if request.scope.get("type") == "websocket":
+            return await call_next(request)
+            
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
@@ -57,16 +61,12 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(SecurityHeadersMiddleware)
 
-# Security: Tighten CORS to known origins (local + Cloud Run dynamic)
+# Security: Tighten CORS to known origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173", 
-        "http://localhost:8000",
-        "https://venueflow.promptwars.in" # Example production origin
-    ],
+    allow_origins=["*"], # Allow all for hackathon deployment to Cloud Run
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
