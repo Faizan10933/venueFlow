@@ -71,7 +71,12 @@ background_task = None
 @limiter.limit("60/minute")
 @lru_cache(maxsize=1)
 def get_stadium_info(request: Request) -> Dict[str, Any]:
-    """Get static stadium information."""
+    """
+    Get static stadium information.
+    
+    Returns:
+        Dict[str, Any]: Static details about stadium infrastructure, menus, and schedule.
+    """
     return {
         "info": STADIUM_INFO,
         "zones": ZONES,
