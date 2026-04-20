@@ -102,6 +102,12 @@ async def chat_endpoint(request: Request, body: ChatRequest) -> Dict[str, str]:
     return {"response": response, "sim_time": live_data["sim_time"]["display"]}
 
 
+@app.get("/api/health")
+async def health_check():
+    """Health check for Cloud Run deployment."""
+    return {"status": "healthy", "timestamp": time.time()}
+
+
 # ─── WebSocket for real-time updates ─────────────────────────────
 
 @app.websocket("/ws")
@@ -119,16 +125,24 @@ async def websocket_endpoint(websocket: WebSocket):
         # Keep connection alive, listen for pings
         while True:
             try:
-                data = await asyncio.wait_for(websocket.receive_text(), timeout=0.5)
-                # Handle any client messages if needed
+                # Wait for any message from client or just keep loop alive
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=10.0)
                 if data == "ping":
                     await websocket.send_text("pong")
             except asyncio.TimeoutError:
-                pass
+                # Send a server-side ping to keep Cloud Run connection alive
+                try:
+                    await websocket.send_text("hb") 
+                except Exception:
+                    break
             except WebSocketDisconnect:
+                print("DEBUG: WebSocket disconnected")
                 break
-    except WebSocketDisconnect:
-        pass
+            except Exception as e:
+                print(f"DEBUG: WebSocket error: {e}")
+                break
+    except Exception as e:
+        print(f"DEBUG: WebSocket connection failed: {e}")
     finally:
         if websocket in connected_clients:
             connected_clients.remove(websocket)
