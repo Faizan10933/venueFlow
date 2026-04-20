@@ -14,13 +14,13 @@ export default function LiveStats({ summary, zones }) {
       <article className="stat-card glass-card">
         <div className="stat-label">Avg Food Wait</div>
         <div className="stat-value">{summary.avg_food_wait}m</div>
-        <div className="stat-sub">across {zones.filter(z => z.type === 'food_court').length} courts</div>
+        <div className="stat-sub">across {zones?.filter(z => z.type === 'food_court').length || 0} courts</div>
       </article>
 
       <article className="stat-card glass-card">
         <div className="stat-label">Avg Restroom Wait</div>
         <div className="stat-value">{summary.avg_restroom_wait}m</div>
-        <div className="stat-sub">across {zones.filter(z => z.type === 'restroom').length} blocks</div>
+        <div className="stat-sub">across {zones?.filter(z => z.type === 'restroom').length || 0} blocks</div>
       </article>
 
       <article className="stat-card glass-card">

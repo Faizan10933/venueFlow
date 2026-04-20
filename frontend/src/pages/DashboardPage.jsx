@@ -31,7 +31,7 @@ export default function DashboardPage({ state }) {
         </div>
       </div>
 
-      <LiveStats summary={state.summary} />
+      <LiveStats summary={state.summary} zones={state.zones} />
 
       <div className="dashboard-grid">
         <StadiumMap zones={state.zones} />
