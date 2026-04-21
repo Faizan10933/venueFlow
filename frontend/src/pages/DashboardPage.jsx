@@ -69,11 +69,8 @@ export default function DashboardPage({ state }) {
           style={{ border: 0, borderRadius: 'var(--radius-md)', marginTop: '12px' }}
           loading="lazy"
           allowFullScreen
-          src="https://www.google.com/maps/embed/v1/place?key=YOUR_GOOGLE_MAPS_API_KEY&q=Wankhede+Stadium,Mumbai"
+          src="https://www.google.com/maps/embed/v1/place?key=AIzaSyB-xv5YIRnBO9GRMCqsc8GtpcEq0ZLf0wQ&q=Wankhede+Stadium,Mumbai"
         ></iframe>
-        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '8px' }}>
-          *Note: Requires a valid Google Maps API Key to render. Replace YOUR_GOOGLE_MAPS_API_KEY in DashboardPage.jsx.
-        </p>
       </div>
     </div>
   );
